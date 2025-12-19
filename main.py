@@ -5,7 +5,7 @@ import pandas as pd
 
 CLIENT_ID = "191002"
 CLIENT_SECRET = "495dff09b5b6d4ed7a3ad78a560a8b78b352f8dd"
-ATHLETE_ID = YOUR_ATHLETE_ID   # example: 12345678
+ATHLETE_ID = "2268957"   # example: 12345678
 
 TOKENS_FILE = "tokens.json"
 MILESTONES_FILE = "milestones.csv"
