@@ -106,7 +106,7 @@ def main():
     activity_id = latest_activity["id"]
 
     description = (
-        f"LOTR Walk Challenge 🧙‍♂️\n\n"
+        f"Quest to Mount Doom ⭕🌋\n\n"
         f"You reached: **{stage}**!\n"
         f"Total Journey: {total_miles:.1f} miles "
         f"({total_miles*1.609:.1f} km)\n"
