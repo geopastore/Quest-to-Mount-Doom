@@ -46,11 +46,19 @@
     h2 {
       color: #f5c542;
     }
+    .map {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 1rem;
+    }
     footer {
       text-align: center;
       padding: 2rem;
       font-size: 0.9rem;
       color: #aaa;
+    }
+    a.external {
+      color: #f5c542;
     }
   </style>
 </head>
@@ -71,11 +79,8 @@
     <div class="card">
       <h2>📜 The Challenge</h2>
       <p>
-        This project tracks my real-world running distance on Strava and maps it
+        This project tracks real-world running distance on Strava and maps it
         onto Frodo’s journey from <strong>The Shire</strong> to <strong>Mount Doom</strong>.
-      </p>
-      <p>
-        Every activity after <strong>19 December 2025</strong> contributes to the quest.
       </p>
     </div>
 
@@ -92,8 +97,12 @@
     <div class="card">
       <h2>🗺️ Progress</h2>
       <p>
-        Progress updates automatically after each Strava activity.
+        Progress updates automatically after each Strava activity. The mileage data is sourced from: 
+        <a class="external" href="https://intramurals.mit.edu/simply-walk-into-mordor-challenge/" target="_blank">
+        MIT Simply Walk Into Mordor Challenge
+        </a>.
       </p>
+      <img src="assets/images/Map.png" alt="Map of Middle-earth" class="map">
       <p>
         See the full journey in the <a href="milestones.html">Milestones</a> page.
       </p>
