@@ -1,4 +1,0 @@
-Flask
-requests
-pandas
-python-dotenv
