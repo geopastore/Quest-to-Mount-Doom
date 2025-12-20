@@ -7,8 +7,8 @@ import os
 # ======================
 # CONFIGURATION
 # ======================
-CLIENT_ID = os.environ["CLIENT_ID"]
-CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+CLIENT_ID = os.environ["STRAVA_CLIENT_ID"]
+CLIENT_SECRET = os.environ["STRAVA_CLIENT_SECRET"]
 ATHLETE_ID = os.environ["ATHLETE_ID"]
 
 TOKENS_FILE = "tokens.json"
