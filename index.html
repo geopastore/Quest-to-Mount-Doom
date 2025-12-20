@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quest to Mount Doom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+    }
+    header {
+      background: linear-gradient(135deg, #7b1e1e, #1a1a1a);
+      padding: 3rem 1rem;
+      text-align: center;
+    }
+    header img {
+      max-width: 160px;
+      margin-bottom: 1rem;
+    }
+    nav {
+      margin-top: 1rem;
+    }
+    nav a {
+      margin: 0 0.75rem;
+      color: #f5c542;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    main {
+      max-width: 800px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+    .card {
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    h2 {
+      color: #f5c542;
+    }
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="assets/images/QTMD_Logo.png" alt="Quest to Mount Doom Logo">
+    <h1>Quest to Mount Doom</h1>
+    <p>A Strava-powered journey across Middle-earth</p>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="milestones.html">Milestones</a>
+      <a href="https://github.com/geopastore/Quest-to-Mount-Doom" target="_blank">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>📜 The Challenge</h2>
+      <p>
+        This project tracks my real-world running distance on Strava and maps it
+        onto Frodo’s journey from <strong>The Shire</strong> to <strong>Mount Doom</strong>.
+      </p>
+      <p>
+        Every activity after <strong>19 December 2025</strong> contributes to the quest.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ How it works</h2>
+      <ul>
+        <li>Strava API fetches all activities</li>
+        <li>Total distance since the start date is calculated</li>
+        <li>Progress is compared against Middle-earth milestones</li>
+        <li>The latest activity is updated automatically</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>🗺️ Progress</h2>
+      <p>
+        Progress updates automatically after each Strava activity.
+      </p>
+      <p>
+        See the full journey in the <a href="milestones.html">Milestones</a> page.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <p>Not all those who wander are lost.</p>
+  </footer>
+</body>
+</html>
