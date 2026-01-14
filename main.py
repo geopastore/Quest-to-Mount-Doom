@@ -41,6 +41,9 @@ def refresh_access_token(refresh_token):
     }
     r = requests.post(STRAVA_TOKEN_URL, data=payload)
     data = r.json()
+    if "access_token" not in data:
+        raise RuntimeError(f"Token refresh failed: {data}")
+
     return {
         "access_token": data["access_token"],
         "refresh_token": data["refresh_token"],
