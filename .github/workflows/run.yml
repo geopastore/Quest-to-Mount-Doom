@@ -23,9 +23,9 @@ jobs:
 
     - name: Run script
       env:
-        CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
-        CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
-        ATHLETE_ID: ${{ secrets.ATHLETE_ID }}
+       STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+       STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+       ATHLETE_ID: ${{ secrets.ATHLETE_ID }}
       run: python main.py
 
     - name: Commit updated tokens
