@@ -121,8 +121,12 @@ def main():
         f"Start Date: {START_DATE} app by G.Pastore"
     )
 
-    append_activity_description(latest_activity, text, access_token)
+  existing_description = latest_activity.get("description") or ""
 
+  if "Quest to Mount Doom" not in existing_description:
+      append_activity_description(latest_activity, text, access_token)
+  else:
+      print("Latest activity already updated — skipping.")
 
-if __name__ == "__main__":
-    main()
+  if __name__ == "__main__":
+      main()
