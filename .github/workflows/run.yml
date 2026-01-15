@@ -1,8 +1,11 @@
 name: Strava LOTR Tracker
 
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: "*/5 * * * *"   # Every 5min
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -23,9 +26,9 @@ jobs:
 
     - name: Run script
       env:
-       STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
-       STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
-       ATHLETE_ID: ${{ secrets.ATHLETE_ID }}
+        STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+        STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+        ATHLETE_ID: ${{ secrets.ATHLETE_ID }}
       run: python main.py
 
     - name: Commit updated tokens
