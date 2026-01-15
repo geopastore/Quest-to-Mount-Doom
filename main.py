@@ -43,10 +43,8 @@ def refresh_access_token(refresh_token):
     }
     r = requests.post(STRAVA_TOKEN_URL, data=payload)
     data = r.json()
-
     if "access_token" not in data:
         raise RuntimeError(f"Token refresh failed: {data}")
-
     return {
         "access_token": data["access_token"],
         "refresh_token": data["refresh_token"],
@@ -66,7 +64,7 @@ def get_access_token():
 # ======================
 def load_milestones():
     df = pd.read_csv(MILESTONES_FILE)
-    df.columns = df.columns.str.strip()  # remove header spaces
+    df.columns = df.columns.str.strip()  # remove extra spaces
     df["Miles"] = pd.to_numeric(df["Miles"], errors="coerce")
     df = df.dropna(subset=["Miles"])
     return df.sort_values("Miles")
@@ -80,26 +78,13 @@ def find_current_stage(total_miles, milestones_df):
 # ======================
 def get_activities(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
-    r = requests.get(
-        STRAVA_ACTIVITIES_URL,
-        headers=headers,
-        params={"per_page": 200}
-    )
+    r = requests.get(STRAVA_ACTIVITIES_URL, headers=headers, params={"per_page": 200})
     return r.json()
-
-def compute_cumulative_distance(activities, start_date):
-    total_m = 0
-    for a in activities:
-        activity_date = a["start_date"][:10]
-        if activity_date >= start_date:
-            total_m += a.get("distance", 0)
-    return total_m / 1609.34  # meters → miles
 
 def append_activity_description(activity, text, access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
     existing = activity.get("description") or ""
     updated = existing + "\n\n" + text if existing else text
-
     url = STRAVA_UPDATE_ACTIVITY_URL.format(activity["id"])
     r = requests.put(url, headers=headers, data={"description": updated})
     print(f"Updated activity {activity['id']}")
@@ -110,32 +95,42 @@ def append_activity_description(activity, text, access_token):
 def main():
     access_token = get_access_token()
     milestones = load_milestones()
-
     activities = get_activities(access_token)
+
     if not activities:
         print("No activities found.")
         return
 
-    total_miles = compute_cumulative_distance(activities, START_DATE)
-    stage = find_current_stage(total_miles, milestones)
+    # Filter only activities since START_DATE
+    activities_filtered = [a for a in activities if a["start_date"][:10] >= START_DATE]
 
-    text = (
-        f"Quest to Mount Doom ⭕🌋\n"
-        f"Reached: {stage}\n"
-        f"Total Journey: {total_miles:.1f} mi ({total_miles*1.609:.1f} km)\n"
-        f"Start Date: {START_DATE} app by G.Pastore"
-    )
+    # Sort by date ascending (oldest first)
+    activities_sorted = sorted(activities_filtered, key=lambda x: x["start_date"])
 
-    # Check and update the last 5 activities
-    for activity in activities[:5]:
-        existing_description = activity.get("description") or ""
+    # Only consider last 5 activities
+    last_5 = activities_sorted[-5:]
 
-        # Skip if already amended by this app
-        if APP_SIGNATURE in existing_description:
-            print(f"Activity {activity['id']} already updated — skipping.")
-            continue
+    cumulative_m = 0
+    for activity in activities_sorted:
+        # Increment cumulative distance
+        cumulative_m += activity.get("distance", 0)
+        total_miles = cumulative_m / 1609.34
+        stage = find_current_stage(total_miles, milestones)
 
-        append_activity_description(activity, text, access_token)
+        # Only update if this activity is one of the last 5
+        if activity in last_5:
+            existing_description = activity.get("description") or ""
+            if APP_SIGNATURE in existing_description:
+                print(f"Activity {activity['id']} already updated — skipping.")
+                continue
+
+            text = (
+                f"Quest to Mount Doom ⭕🌋\n"
+                f"Reached: {stage}\n"
+                f"Total Journey: {total_miles:.1f} mi ({total_miles*1.609:.1f} km)\n"
+                f"Start Date: {START_DATE} app by G.Pastore"
+            )
+            append_activity_description(activity, text, access_token)
 
 if __name__ == "__main__":
     main()
