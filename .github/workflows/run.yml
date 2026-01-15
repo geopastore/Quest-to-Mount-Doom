@@ -2,7 +2,7 @@ name: Strava LOTR Tracker
 
 on:
   schedule:
-    - cron: "/5 * * * *"   # Every hour
+    - cron: "*/5 * * * *"   # Every 5min
   workflow_dispatch:
 
 jobs:
