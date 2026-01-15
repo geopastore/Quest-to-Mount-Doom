@@ -20,8 +20,8 @@ STRAVA_UPDATE_ACTIVITY_URL = "https://www.strava.com/api/v3/activities/{}"
 
 START_DATE = "2025-12-19"  # YYYY-MM-DD
 
-# Hidden marker to prevent duplicate edits
-MARKER = "[LOTR_TRACKER]"
+# Text used to detect already-updated activities
+APP_SIGNATURE = "Quest to Mount Doom"
 
 # ======================
 # TOKEN HANDLING
@@ -66,6 +66,9 @@ def get_access_token():
 # ======================
 def load_milestones():
     df = pd.read_csv(MILESTONES_FILE)
+    df.columns = df.columns.str.strip()  # remove header spaces
+    df["Miles"] = pd.to_numeric(df["Miles"], errors="coerce")
+    df = df.dropna(subset=["Miles"])
     return df.sort_values("Miles")
 
 def find_current_stage(total_miles, milestones_df):
@@ -77,7 +80,11 @@ def find_current_stage(total_miles, milestones_df):
 # ======================
 def get_activities(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
-    r = requests.get(STRAVA_ACTIVITIES_URL, headers=headers, params={"per_page": 200})
+    r = requests.get(
+        STRAVA_ACTIVITIES_URL,
+        headers=headers,
+        params={"per_page": 200}
+    )
     return r.json()
 
 def compute_cumulative_distance(activities, start_date):
@@ -86,7 +93,7 @@ def compute_cumulative_distance(activities, start_date):
         activity_date = a["start_date"][:10]
         if activity_date >= start_date:
             total_m += a.get("distance", 0)
-    return total_m / 1609.34  # convert meters to miles
+    return total_m / 1609.34  # meters → miles
 
 def append_activity_description(activity, text, access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -95,7 +102,7 @@ def append_activity_description(activity, text, access_token):
 
     url = STRAVA_UPDATE_ACTIVITY_URL.format(activity["id"])
     r = requests.put(url, headers=headers, data={"description": updated})
-    print(f"Updated activity {activity['id']}: {r.json()}")
+    print(f"Updated activity {activity['id']}")
 
 # ======================
 # MAIN
@@ -119,13 +126,16 @@ def main():
         f"Start Date: {START_DATE} app by G.Pastore"
     )
 
-    # Update the last 5 activities safely
+    # Check and update the last 5 activities
     for activity in activities[:5]:
         existing_description = activity.get("description") or ""
-        if MARKER not in existing_description:
-            append_activity_description(activity, MARKER + "\n" + text, access_token)
-        else:
+
+        # Skip if already amended by this app
+        if APP_SIGNATURE in existing_description:
             print(f"Activity {activity['id']} already updated — skipping.")
+            continue
+
+        append_activity_description(activity, text, access_token)
 
 if __name__ == "__main__":
     main()
