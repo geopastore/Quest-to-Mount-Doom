@@ -128,7 +128,7 @@ def main():
                 f"Quest to Mount Doom ⭕🌋\n"
                 f"Reached: {stage}\n"
                 f"Total Journey: {total_miles:.1f} mi ({total_miles*1.609:.1f} km)\n"
-                f"Start Date: {START_DATE} app by G.Pastore"
+                f"Start Date: {START_DATE} app by G.Pastore\n"
                 f"https://geopastore.github.io/Quest-to-Mount-Doom/" 
             )
             append_activity_description(activity, text, access_token)
