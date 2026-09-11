@@ -1,8 +1,10 @@
 import requests
 import json
 import time
-import pandas as pd
 import os
+from datetime import datetime, timezone
+
+import pandas as pd
 
 # ======================
 # CONFIGURATION
@@ -16,11 +18,15 @@ MILESTONES_FILE = "milestones.csv"
 
 STRAVA_TOKEN_URL = "https://www.strava.com/api/v3/oauth/token"
 STRAVA_ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
-STRAVA_UPDATE_ACTIVITY_URL = "https://www.strava.com/api/v3/activities/{}"
+STRAVA_ACTIVITY_URL = "https://www.strava.com/api/v3/activities/{}"  # GET detail + PUT update
 
 START_DATE = "2025-12-19"  # YYYY-MM-DD
 
-# Text used to detect already-updated activities
+# How many of the most recent activities to (re)label each run.
+# Bump this to e.g. 15 for a single run to repair older labels, then set it back to 5.
+UPDATE_LAST_N = 5
+
+# Marker that identifies the block this script adds to a description.
 APP_SIGNATURE = "Quest to Mount Doom"
 
 # ======================
@@ -76,18 +82,64 @@ def find_current_stage(total_miles, milestones_df):
 # ======================
 # STRAVA
 # ======================
-def get_activities(access_token):
+def get_activities(access_token, after_date):
+    """Return every activity on or after after_date, paging through the API.
+
+    The list endpoint returns at most 200 activities per request, so we page
+    with `page` until an empty page comes back. The `after` filter (epoch
+    seconds) keeps us from fetching history older than the quest.
+    """
     headers = {"Authorization": f"Bearer {access_token}"}
-    r = requests.get(STRAVA_ACTIVITIES_URL, headers=headers, params={"per_page": 250})
+    dt = datetime.strptime(after_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    after_epoch = int(dt.timestamp()) - 86400  # a day of buffer for timezones
+
+    all_activities = []
+    page = 1
+    while True:
+        params = {"per_page": 200, "page": page, "after": after_epoch}
+        r = requests.get(STRAVA_ACTIVITIES_URL, headers=headers, params=params)
+        batch = r.json()
+        if not isinstance(batch, list):
+            raise RuntimeError(f"Strava API error while listing activities: {batch}")
+        if not batch:                 # empty page means nothing left to fetch
+            break
+        all_activities.extend(batch)
+        page += 1
+        time.sleep(1)                 # stay comfortably within the rate limit
+    return all_activities
+
+def get_activity_detail(activity_id, access_token):
+    """Fetch a single activity, which (unlike the list endpoint) includes the description."""
+    headers = {"Authorization": f"Bearer {access_token}"}
+    r = requests.get(STRAVA_ACTIVITY_URL.format(activity_id), headers=headers)
     return r.json()
 
-def append_activity_description(activity, text, access_token):
+def strip_quest_block(description):
+    """Remove any previously added Quest block, keeping the athlete's own text."""
+    if not description:
+        return ""
+    idx = description.find(APP_SIGNATURE)
+    return description[:idx].rstrip() if idx != -1 else description.rstrip()
+
+def set_activity_description(activity_id, quest_text, access_token):
+    """Rewrite an activity's Quest block, preserving anything the athlete wrote.
+
+    Reads the current description first, so the block is replaced rather than
+    stacked, and skips the write entirely when nothing would change.
+    """
+    detail = get_activity_detail(activity_id, access_token)
+    current = detail.get("description") or ""
+    base = strip_quest_block(current)
+    updated = (base + "\n\n" + quest_text) if base else quest_text
+
+    if updated == current:
+        print(f"Activity {activity_id} already correct, skipping.")
+        return
+
     headers = {"Authorization": f"Bearer {access_token}"}
-    existing = activity.get("description") or ""
-    updated = existing + "\n\n" + text if existing else text
-    url = STRAVA_UPDATE_ACTIVITY_URL.format(activity["id"])
-    r = requests.put(url, headers=headers, data={"description": updated})
-    print(f"Updated activity {activity['id']}")
+    requests.put(STRAVA_ACTIVITY_URL.format(activity_id),
+                 headers=headers, data={"description": updated})
+    print(f"Updated activity {activity_id}")
 
 # ======================
 # MAIN
@@ -95,44 +147,37 @@ def append_activity_description(activity, text, access_token):
 def main():
     access_token = get_access_token()
     milestones = load_milestones()
-    activities = get_activities(access_token)
+    activities = get_activities(access_token, START_DATE)
 
+    # Precise trim (the `after` filter is coarse by a day of buffer).
+    activities = [a for a in activities if a["start_date"][:10] >= START_DATE]
     if not activities:
-        print("No activities found.")
+        print("No activities found since START_DATE.")
         return
 
-    # Filter only activities since START_DATE
-    activities_filtered = [a for a in activities if a["start_date"][:10] >= START_DATE]
+    # Sort by date ascending (oldest first).
+    activities_sorted = sorted(activities, key=lambda a: a["start_date"])
 
-    # Sort by date ascending (oldest first)
-    activities_sorted = sorted(activities_filtered, key=lambda x: x["start_date"])
-
-    # Only consider last 5 activities
-    last_5 = activities_sorted[-5:]
+    # The most recent activities are the ones we (re)label this run.
+    to_update_ids = {a["id"] for a in activities_sorted[-UPDATE_LAST_N:]}
 
     cumulative_m = 0
     for activity in activities_sorted:
-        # Increment cumulative distance
         cumulative_m += activity.get("distance", 0)
         total_miles = cumulative_m / 1609.34
+        total_km = cumulative_m / 1000.0
         stage = find_current_stage(total_miles, milestones)
 
-        # Only update if this activity is one of the last 5
-        if activity in last_5:
-            existing_description = activity.get("description") or ""
-            if APP_SIGNATURE in existing_description:
-                print(f"Activity {activity['id']} already updated — skipping.")
-                continue
-
+        if activity["id"] in to_update_ids:
             text = (
                 f"Quest to Mount Doom ⭕🌋\n"
                 f"Reached: {stage}\n"
-                f"Total Journey: {total_miles:.1f} mi ({total_miles*1.609:.1f} km)\n"
+                f"Total Journey: {total_miles:.1f} mi ({total_km:.1f} km)\n"
                 f"Start Date: {START_DATE} app by G.Pastore\n"
                 f"\n"
-                f"https://geopastore.github.io/Quest-to-Mount-Doom/" 
+                f"https://geopastore.github.io/Quest-to-Mount-Doom/"
             )
-            append_activity_description(activity, text, access_token)
+            set_activity_description(activity["id"], text, access_token)
 
 if __name__ == "__main__":
     main()
