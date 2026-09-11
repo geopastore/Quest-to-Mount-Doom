@@ -78,7 +78,7 @@ def find_current_stage(total_miles, milestones_df):
 # ======================
 def get_activities(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
-    r = requests.get(STRAVA_ACTIVITIES_URL, headers=headers, params={"per_page": 200})
+    r = requests.get(STRAVA_ACTIVITIES_URL, headers=headers, params={"per_page": 250})
     return r.json()
 
 def append_activity_description(activity, text, access_token):
