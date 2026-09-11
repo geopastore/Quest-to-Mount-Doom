@@ -24,7 +24,7 @@ START_DATE = "2025-12-19"  # YYYY-MM-DD
 
 # How many of the most recent activities to (re)label each run.
 # Bump this to e.g. 15 for a single run to repair older labels, then set it back to 5.
-UPDATE_LAST_N = 5
+UPDATE_LAST_N = 15
 
 # Marker that identifies the block this script adds to a description.
 APP_SIGNATURE = "Quest to Mount Doom"
